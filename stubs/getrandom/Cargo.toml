@@ -1,0 +1,10 @@
+[package]
+name = "getrandom"
+version = "0.2.3"
+edition = "2018"
+
+[dependencies]
+core = { version = "1.0", optional = true, package = "rustc-std-workspace-core" }
+
+[features]
+std = []

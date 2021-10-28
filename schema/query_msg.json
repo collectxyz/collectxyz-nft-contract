@@ -1,0 +1,407 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "description": "This overrides the ExecuteMsg enum defined in cw721-base",
+  "anyOf": [
+    {
+      "description": "Returns the current contract config Return type: Config",
+      "type": "object",
+      "required": [
+        "config"
+      ],
+      "properties": {
+        "config": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns the currently configured captcha public key",
+      "type": "object",
+      "required": [
+        "captcha_public_key"
+      ],
+      "properties": {
+        "captcha_public_key": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns all tokens owned by the given address, [] if unset. Return type: XyzTokensResponse.",
+      "type": "object",
+      "required": [
+        "xyz_tokens"
+      ],
+      "properties": {
+        "xyz_tokens": {
+          "type": "object",
+          "required": [
+            "owner"
+          ],
+          "properties": {
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "owner": {
+              "type": "string"
+            },
+            "start_after": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Lists all token_ids controlled by the contract. Return type: XyzTokensResponse.",
+      "type": "object",
+      "required": [
+        "all_xyz_tokens"
+      ],
+      "properties": {
+        "all_xyz_tokens": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "start_after": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns metadata about one particular token, based on *ERC721 Metadata JSON Schema* but directly from the contract: XyzTokenInfo.",
+      "type": "object",
+      "required": [
+        "xyz_nft_info"
+      ],
+      "properties": {
+        "xyz_nft_info": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "token_id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns metadata about the token associated with the given coordinates, if any. Return type: XyzTokenInfo.",
+      "type": "object",
+      "required": [
+        "xyz_nft_info_by_coords"
+      ],
+      "properties": {
+        "xyz_nft_info_by_coords": {
+          "type": "object",
+          "required": [
+            "coordinates"
+          ],
+          "properties": {
+            "coordinates": {
+              "$ref": "#/definitions/Coordinates"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns the number of tokens owned by the given address Return type: NumTokensResponse",
+      "type": "object",
+      "required": [
+        "num_tokens_for_owner"
+      ],
+      "properties": {
+        "num_tokens_for_owner": {
+          "type": "object",
+          "required": [
+            "owner"
+          ],
+          "properties": {
+            "owner": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Calculates the price to move the given token to the given coordinate. Return type: MoveParamsResponse",
+      "type": "object",
+      "required": [
+        "move_params"
+      ],
+      "properties": {
+        "move_params": {
+          "type": "object",
+          "required": [
+            "coordinates",
+            "token_id"
+          ],
+          "properties": {
+            "coordinates": {
+              "$ref": "#/definitions/Coordinates"
+            },
+            "token_id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "owner_of"
+      ],
+      "properties": {
+        "owner_of": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "include_expired": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "token_id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "approved_for_all"
+      ],
+      "properties": {
+        "approved_for_all": {
+          "type": "object",
+          "required": [
+            "owner"
+          ],
+          "properties": {
+            "include_expired": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "owner": {
+              "type": "string"
+            },
+            "start_after": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "num_tokens"
+      ],
+      "properties": {
+        "num_tokens": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "contract_info"
+      ],
+      "properties": {
+        "contract_info": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "nft_info"
+      ],
+      "properties": {
+        "nft_info": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "token_id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "all_nft_info"
+      ],
+      "properties": {
+        "all_nft_info": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "include_expired": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "token_id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "tokens"
+      ],
+      "properties": {
+        "tokens": {
+          "type": "object",
+          "required": [
+            "owner"
+          ],
+          "properties": {
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "owner": {
+              "type": "string"
+            },
+            "start_after": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "all_tokens"
+      ],
+      "properties": {
+        "all_tokens": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "start_after": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "Coordinates": {
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "x": {
+          "type": "integer",
+          "format": "int16"
+        },
+        "y": {
+          "type": "integer",
+          "format": "int16"
+        },
+        "z": {
+          "type": "integer",
+          "format": "int16"
+        }
+      }
+    }
+  }
+}

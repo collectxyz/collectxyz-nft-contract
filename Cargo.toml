@@ -1,0 +1,66 @@
+[package]
+name = "collectxyz-nft-contract"
+version = "0.1.0"
+edition = "2018"
+license = "Apache-2.0"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+base64 = "0.13.0"
+cosmwasm-std = { version = "0.16.0" }
+cosmwasm-storage = { version = "0.16.0" }
+cw-storage-plus = "0.9.1"
+cw0 = { version = "0.9.1" }
+cw2 = { version = "0.9.1" }
+cw721 = { version = "0.9.1" }
+cw721-base = { version = "0.9.1", features = ["library"] }
+thiserror = "1.0.29"
+rsa = { version = "0.5.0" }
+getrandom = { version = "0.2.3" }
+schemars = "0.8.3"
+sha2 = { version = "0.9.8" }
+serde = { version = "1.0.127", default-features = false, features = ["derive"] }
+serde_json = "1.0.67" 
+
+[patch.crates-io]
+# getrandom (a transitive dependency of rsa) is not compatible with cosmwasm, so override
+# it with a stub version of the library that does nothing at all.
+getrandom = { path = "./stubs/getrandom" }
+
+[dev-dependencies]
+cosmwasm-schema = { version = "0.16.0" }
+
+
+[package.metadata.scripts]
+optimize = """docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.11.5
+"""
