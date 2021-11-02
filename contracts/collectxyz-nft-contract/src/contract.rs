@@ -1,4 +1,4 @@
-#[cfg(not(feature = "library"))]
+use collectxyz::nft::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
@@ -6,7 +6,6 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::execute as ExecHandler;
-use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::query as QueryHandler;
 
 const CONTRACT_NAME: &str = "crates.io:collectxyz-nft-contract";
