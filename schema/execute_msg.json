@@ -96,14 +96,25 @@
       "additionalProperties": false
     },
     {
-      "description": "Withdraw current contract balance to owner address.",
+      "description": "Withdraw from current contract balance to owner address.",
       "type": "object",
       "required": [
         "withdraw"
       ],
       "properties": {
         "withdraw": {
-          "type": "object"
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Coin"
+              }
+            }
+          }
         }
       },
       "additionalProperties": false
@@ -295,9 +306,11 @@
       "required": [
         "base_move_fee",
         "base_move_nanos",
+        "max_coordinate_value",
         "mint_fee",
         "move_fee_per_step",
         "move_nanos_per_step",
+        "public_minting_enabled",
         "token_supply",
         "wallet_limit"
       ],
@@ -315,6 +328,11 @@
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
+        },
+        "max_coordinate_value": {
+          "description": "The maximum value of a coordinate in any dimension. The minimum will be set to the negation of this value.",
+          "type": "integer",
+          "format": "int64"
         },
         "mint_fee": {
           "description": "The price to mint a new xyz (doesn't apply to the contract owner)",
@@ -337,6 +355,10 @@
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
+        },
+        "public_minting_enabled": {
+          "description": "If true, then anyone can mint an xyz token. If false, then only the contract owner is authorized to mint.",
+          "type": "boolean"
         },
         "token_supply": {
           "description": "The maximum allowed number of xyz tokens",
@@ -362,15 +384,15 @@
       "properties": {
         "x": {
           "type": "integer",
-          "format": "int16"
+          "format": "int64"
         },
         "y": {
           "type": "integer",
-          "format": "int16"
+          "format": "int64"
         },
         "z": {
           "type": "integer",
-          "format": "int16"
+          "format": "int64"
         }
       }
     },

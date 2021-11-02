@@ -53,15 +53,15 @@
       "properties": {
         "x": {
           "type": "integer",
-          "format": "int16"
+          "format": "int64"
         },
         "y": {
           "type": "integer",
-          "format": "int16"
+          "format": "int64"
         },
         "z": {
           "type": "integer",
-          "format": "int16"
+          "format": "int64"
         }
       }
     },
