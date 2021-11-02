@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "QueryMsg",
   "description": "This overrides the ExecuteMsg enum defined in cw721-base",
-  "anyOf": [
+  "oneOf": [
     {
       "description": "Returns the current contract config Return type: Config",
       "type": "object",

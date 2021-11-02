@@ -2,15 +2,14 @@
 use serde_json;
 use std::str;
 
+use collectxyz::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, QueryMsg, XyzExtension};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{BankMsg, Binary, Coin, DepsMut, StdError, Uint128};
 
 use crate::contract::{execute, instantiate, query};
 use crate::error::ContractError;
 use crate::execute as ExecHandler;
-use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::query as QueryHandler;
-use crate::state::{Config, Coordinates, XyzExtension};
 
 const OWNER: &str = "owner";
 const NONOWNER: &str = "nonowner";
@@ -680,7 +679,7 @@ fn move_token() {
     assert_eq!(
         err,
         ContractError::Std(StdError::not_found(
-            "cw721_base::state::TokenInfo<collectxyz_nft_contract::state::XyzExtension>"
+            "cw721_base::state::TokenInfo<collectxyz::nft::XyzExtension>"
         ))
     );
 

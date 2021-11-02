@@ -3,6 +3,7 @@ use rsa::{hash::Hash, padding::PaddingScheme, PublicKey};
 use serde_json;
 use sha2::{Digest, Sha256};
 
+use collectxyz::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, MigrateMsg, XyzExtension};
 use cosmwasm_std::{
     BankMsg, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError, StdResult, Storage,
 };
@@ -10,11 +11,7 @@ use cw721::ContractInfoResponse;
 use cw721_base::{state::TokenInfo, Cw721Contract};
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
-use crate::state::{
-    load_captcha_public_key, save_captcha_public_key, tokens, Config, Coordinates, XyzExtension,
-    CONFIG, OWNER,
-};
+use crate::state::{load_captcha_public_key, save_captcha_public_key, tokens, CONFIG, OWNER};
 
 const XYZ: &str = "xyz";
 

@@ -1,15 +1,16 @@
 use rsa::pkcs8::ToPublicKey;
 
+use collectxyz::nft::{
+    Config, Coordinates, MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo,
+    XyzTokensResponse,
+};
 use cosmwasm_std::{Binary, Deps, Empty, Env, Order, StdError, StdResult};
 use cw0::maybe_addr;
 use cw721::NumTokensResponse;
 use cw721_base::Cw721Contract;
 use cw_storage_plus::Bound;
 
-use crate::msg::{MoveParamsResponse, QueryMsg, XyzTokensResponse};
-use crate::state::{
-    load_captcha_public_key, tokens, Config, Coordinates, XyzExtension, XyzTokenInfo, CONFIG,
-};
+use crate::state::{load_captcha_public_key, tokens, CONFIG};
 
 pub fn query_config(deps: Deps) -> StdResult<Config> {
     CONFIG.load(deps.storage)

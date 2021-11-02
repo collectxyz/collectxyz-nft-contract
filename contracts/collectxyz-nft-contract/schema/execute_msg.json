@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ExecuteMsg",
   "description": "This overrides the ExecuteMsg enum defined in cw721-base",
-  "anyOf": [
+  "oneOf": [
     {
       "description": "Mint a new NFT for the message sender with the given set of coordinates and signature from the recaptcha verifier lambda function.",
       "type": "object",
@@ -398,7 +398,7 @@
     },
     "Expiration": {
       "description": "Expiration represents a point in time when some event happens. It can compare with a BlockInfo and will return is_expired() == true once the condition is hit (and for every block in the future)",
-      "anyOf": [
+      "oneOf": [
         {
           "description": "AtHeight will expire when `env.block.height` >= height",
           "type": "object",
