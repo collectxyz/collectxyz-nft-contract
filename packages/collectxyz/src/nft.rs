@@ -84,7 +84,7 @@ impl Coordinates {
         .concat()
     }
 
-    pub fn distance(&self, other: Self) -> u16 {
+    pub fn distance(&self, other: Self) -> u64 {
         let distance =
             (self.x - other.x).abs() + (self.y - other.y).abs() + (self.z - other.z).abs();
         // the distance will always be positive, since it's a sum of absolute values
