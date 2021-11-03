@@ -1,5 +1,4 @@
 #![cfg(test)]
-use serde_json;
 use std::str;
 
 use collectxyz::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, QueryMsg, XyzExtension};
@@ -103,7 +102,7 @@ fn as_json(binary: &Binary) -> serde_json::Value {
     let b64_binary = binary.to_base64();
     let decoded_bytes = base64::decode(&b64_binary).unwrap();
     let decoded_str = str::from_utf8(&decoded_bytes).unwrap();
-    serde_json::from_str(&decoded_str).unwrap()
+    serde_json::from_str(decoded_str).unwrap()
 }
 
 #[test]
@@ -161,28 +160,25 @@ fn minting() {
     )
     .unwrap_err();
     assert_eq!(err, ContractError::Claimed {});
-    assert_eq!(
-        format!("{}", err).contains("Coordinates already claimed"),
-        true
-    );
+    assert!(format!("{}", err).contains("Coordinates already claimed"));
 
     // random cannot mint out-of-bounds coordinates
     let config = mock_config();
-    for cfg in vec!["x", "y", "z", "xy", "xz", "yz", "xyz"] {
-        for sign in vec![-1, 1] {
+    for cfg in &["x", "y", "z", "xy", "xz", "yz", "xyz"] {
+        for sign in &[-1, 1] {
             let mut coords = Coordinates {
                 x: sign * config.max_coordinate_value,
                 y: sign * config.max_coordinate_value,
                 z: sign * config.max_coordinate_value,
             };
-            if cfg.contains("x") {
-                coords.x += sign * 1;
+            if cfg.contains('x') {
+                coords.x += sign;
             }
-            if cfg.contains("y") {
-                coords.y += sign * 1;
+            if cfg.contains('y') {
+                coords.y += sign;
             }
-            if cfg.contains("z") {
-                coords.z += sign * 1;
+            if cfg.contains('z') {
+                coords.z += sign;
             }
             let oob_mint_msg = ExecuteMsg::Mint {
                 captcha_signature: String::from(SIG_X1Y2Z3),
@@ -235,7 +231,7 @@ fn minting() {
         "Explore the metaverse, starting with xyz."
     );
     if let serde_json::Value::String(image) = &info["image"] {
-        assert_eq!(image.starts_with("data:image/svg+xml;base64,"), true);
+        assert!(image.starts_with("data:image/svg+xml;base64,"));
     } else {
         panic!("NftInfo response 'image' had wrong data type");
     }
@@ -289,7 +285,7 @@ fn mint_fee() {
         let err = execute(
             deps.as_mut(),
             mock_env(),
-            mock_info(NONOWNER, &funds),
+            mock_info(NONOWNER, funds),
             ExecuteMsg::Mint {
                 captcha_signature: String::from(SIG_X1Y2Z3),
                 coordinates: Coordinates { x: 1, y: 2, z: 3 },
@@ -378,7 +374,7 @@ fn token_supply_and_public_minting() {
     setup_contract(deps.as_mut(), None, Some(5), None);
 
     // mint 4 tokens for the non-owner
-    for (sig, coords) in vec![
+    for (sig, coords) in &[
         (SIG_X1Y2Z3, Coordinates { x: 1, y: 2, z: 3 }),
         (SIG_X3Y2Z1, Coordinates { x: 3, y: 2, z: 1 }),
         (SIG_X0Y0Z0, Coordinates { x: 0, y: 0, z: 0 }),
@@ -389,8 +385,8 @@ fn token_supply_and_public_minting() {
             mock_env(),
             mock_info(NONOWNER, &[]),
             ExecuteMsg::Mint {
-                captcha_signature: String::from(sig),
-                coordinates: coords,
+                captcha_signature: String::from(*sig),
+                coordinates: *coords,
             },
         )
         .unwrap();
@@ -468,13 +464,13 @@ fn update_and_query_config() {
     setup_contract(
         deps.as_mut(),
         Some(initial_config.mint_fee.clone()),
-        Some(initial_config.token_supply.clone()),
-        Some(initial_config.wallet_limit.clone()),
+        Some(initial_config.token_supply),
+        Some(initial_config.wallet_limit),
     );
 
     // query initial config
     let res = QueryHandler::query_config(deps.as_ref()).unwrap();
-    assert_eq!(res, initial_config.clone());
+    assert_eq!(res, initial_config);
 
     // change the config
     let mut new_config = initial_config.clone();
@@ -492,7 +488,7 @@ fn update_and_query_config() {
 
     // check config was unchanged
     let res = QueryHandler::query_config(deps.as_ref()).unwrap();
-    assert_eq!(res, initial_config.clone());
+    assert_eq!(res, initial_config);
 
     // owner can update config
     let _ = ExecHandler::execute_update_config(
@@ -504,7 +500,7 @@ fn update_and_query_config() {
 
     // check config was updated
     let res = QueryHandler::query_config(deps.as_ref()).unwrap();
-    assert_eq!(res, new_config.clone());
+    assert_eq!(res, new_config);
 }
 
 #[test]
@@ -617,7 +613,7 @@ fn num_tokens_for_owner() {
     )
     .unwrap();
 
-    for owner in vec![OWNER, NONOWNER] {
+    for owner in &[OWNER, NONOWNER] {
         let num_tokens = QueryHandler::query_num_tokens_for_owner(
             deps.as_ref(),
             mock_info(owner, &[]).sender.to_string(),
@@ -650,7 +646,7 @@ fn move_token() {
         mock_info(NONOWNER, &[]),
         ExecuteMsg::Mint {
             captcha_signature: SIG_X0Y0Z0.to_string(),
-            coordinates: nonowner_coords.clone(),
+            coordinates: nonowner_coords,
         },
     )
     .unwrap();
@@ -660,7 +656,7 @@ fn move_token() {
         mock_info(OWNER, &[]),
         ExecuteMsg::Mint {
             captcha_signature: SIG_X1Y1Z1.to_string(),
-            coordinates: owner_coords.clone(),
+            coordinates: owner_coords,
         },
     )
     .unwrap();
@@ -703,7 +699,7 @@ fn move_token() {
         mock_info(OWNER, &[]),
         ExecuteMsg::Move {
             token_id: nonowner_xyz_id.to_string(),
-            coordinates: nonowner_coords.clone(),
+            coordinates: nonowner_coords,
         },
     )
     .unwrap_err();
@@ -743,7 +739,7 @@ fn move_token() {
         mock_info(NONOWNER, &[]),
         ExecuteMsg::Move {
             token_id: nonowner_xyz_id.to_string(),
-            coordinates: nonowner_target.clone(),
+            coordinates: nonowner_target,
         },
     )
     .unwrap_err();
@@ -756,7 +752,7 @@ fn move_token() {
     let move_params = QueryHandler::query_move_params(
         deps.as_ref(),
         nonowner_xyz_id.to_string(),
-        nonowner_target.clone(),
+        nonowner_target,
     )
     .unwrap();
 
@@ -769,7 +765,7 @@ fn move_token() {
         mock_info(NONOWNER, &[move_params.fee.clone()]),
         ExecuteMsg::Move {
             token_id: nonowner_xyz_id.to_string(),
-            coordinates: nonowner_target.clone(),
+            coordinates: nonowner_target,
         },
     )
     .unwrap();
@@ -780,8 +776,8 @@ fn move_token() {
     assert_eq!(
         res.extension,
         XyzExtension {
-            coordinates: nonowner_target.clone(),
-            prev_coordinates: Some(nonowner_coords.clone()),
+            coordinates: nonowner_target,
+            prev_coordinates: Some(nonowner_coords),
             arrival: mock_env().block.time.plus_nanos(move_params.duration_nanos),
         }
     );
@@ -793,7 +789,7 @@ fn move_token() {
         mock_info(NONOWNER, &[move_params.fee.clone()]),
         ExecuteMsg::Move {
             token_id: nonowner_xyz_id.to_string(),
-            coordinates: nonowner_coords.clone(),
+            coordinates: nonowner_coords,
         },
     )
     .unwrap_err();
@@ -805,10 +801,10 @@ fn move_token() {
     let _ = execute(
         deps.as_mut(),
         env,
-        mock_info(NONOWNER, &[move_params.fee.clone()]),
+        mock_info(NONOWNER, &[move_params.fee]),
         ExecuteMsg::Move {
             token_id: nonowner_xyz_id.to_string(),
-            coordinates: nonowner_coords.clone(),
+            coordinates: nonowner_coords,
         },
     );
 
@@ -820,7 +816,7 @@ fn move_token() {
         mock_info(OWNER, &[]),
         ExecuteMsg::Move {
             token_id: owner_xyz_id.to_string(),
-            coordinates: owner_target.clone(),
+            coordinates: owner_target,
         },
     )
     .unwrap();
@@ -829,8 +825,8 @@ fn move_token() {
     assert_eq!(
         res.extension,
         XyzExtension {
-            coordinates: owner_target.clone(),
-            prev_coordinates: Some(owner_coords.clone()),
+            coordinates: owner_target,
+            prev_coordinates: Some(owner_coords),
             arrival: mock_env().block.time.plus_nanos(10 + 1),
         }
     );
