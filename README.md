@@ -4,6 +4,10 @@ This repository contains the core NFT smart contract that implements xyz, a base
 
 The xyz contract extends CosmWasm's [CW721-base contract](https://github.com/CosmWasm/cw-plus/tree/v0.9.1/contracts/cw721-base) and supports query and execute messages from the [CW721 spec](https://github.com/CosmWasm/cw-plus/tree/v0.9.1/packages/cw721#cw721-spec-non-fungible-tokens).
 
+## Integrating with xyz
+
+Smart contracts that wish to call the xyz NFT contract should depend on the `collectxyz` package, which contains structs that define message types for the contract.
+
 ## Development
 
 ### Environment Setup
@@ -25,7 +29,7 @@ rustup target add wasm32-unknown-unknown
 
 ### Testing
 
-Run the contract tests:
+Run all tests for the workspace:
 
 ```sh
 cargo test
@@ -33,11 +37,11 @@ cargo test
 
 ### Compiling
 
-After making sure the tests pass, you can compile the contract:
+To compile the NFT contract, first `cd` into `contracts/collectxyz-nft-contract`, then run:
 
 ```sh
 RUSTFLAGS='-C link-arg=-s' cargo wasm
-shasum -a 256  target/wasm32-unknown-unknown/release/collectxyz_nft_contract.wasm
+shasum -a 256  ../../target/wasm32-unknown-unknown/release/collectxyz_nft_contract.wasm
 ```
 
 #### Production
@@ -48,7 +52,7 @@ For production builds, run the following:
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.11.5
+  cosmwasm/workspace-optimizer:0.11.5
 ```
 
 This uses [rust-optimizer](https://github.com/cosmwasm/rust-optimizer) to perform several optimizations which can significantly reduce the final size of the contract binaries, which will be available inside the `artifacts/` directory.
