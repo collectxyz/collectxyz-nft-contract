@@ -1,7 +1,9 @@
 [package]
 name = "collectxyz-nft-contract"
 version = "0.1.0"
+authors = ["0xja <0xja@protonmail.com>"]
 edition = "2018"
+description = "The NFT smart contract powering xyz on Terra"
 license = "Apache-2.0"
 
 exclude = [
@@ -18,8 +20,6 @@ crate-type = ["cdylib", "rlib"]
 [features]
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
-# use library feature to disable all instantiate/execute/query exports
-library = []
 
 [dependencies]
 base64 = "0.13.0"
