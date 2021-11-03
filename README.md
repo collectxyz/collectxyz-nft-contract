@@ -6,7 +6,7 @@ The xyz contract extends CosmWasm's [CW721-base contract](https://github.com/Cos
 
 ## Integrating with xyz
 
-Smart contracts that wish to call the xyz NFT contract should depend on the `collectxyz` package, which contains structs that define message types for the contract.
+Developers who wish to integrate with xyz should depend on the [`collectxyz` package](https://crates.io/crates/collectxyz), which contains common data types and helpers for interacting with xyz smart contracts.
 
 ## Development
 
