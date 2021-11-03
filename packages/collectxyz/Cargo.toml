@@ -1,7 +1,14 @@
 [package]
 name = "collectxyz"
 version = "0.1.0"
+authors = ["0xja <0xja@protonmail.com>"]
 edition = "2018"
+description = "Common data types and helpers for interacting with xyz smart contracts"
+license = "Apache-2.0"
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
 schemars = "0.8.3"
