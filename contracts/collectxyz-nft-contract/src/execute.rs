@@ -198,7 +198,7 @@ pub fn execute_move(
     }
 
     // check that a move isn't currently in progess
-    if token.extension.arrival > env.block.time {
+    if !token.extension.has_arrived(env.block.time) {
         return Err(ContractError::MoveInProgress {});
     }
 
