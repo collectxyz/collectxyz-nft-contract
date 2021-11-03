@@ -5,6 +5,7 @@ authors = ["0xja <0xja@protonmail.com>"]
 edition = "2018"
 description = "Common data types and helpers for interacting with xyz smart contracts"
 license = "Apache-2.0"
+repository = "https://github.com/collectxyz/collectxyz-nft-contract"
 
 [features]
 # for more explicit tests, cargo test --features=backtraces
