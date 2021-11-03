@@ -99,6 +99,12 @@ pub struct XyzExtension {
     pub arrival: Timestamp,
 }
 
+impl XyzExtension {
+    pub fn has_arrived(&self, current_time: Timestamp) -> bool {
+        self.arrival <= current_time
+    }
+}
+
 pub type XyzTokenInfo = TokenInfo<XyzExtension>;
 
 /// This overrides the ExecuteMsg enum defined in cw721-base
