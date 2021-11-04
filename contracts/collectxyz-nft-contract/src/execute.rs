@@ -284,7 +284,6 @@ pub fn cw721_base_execute(
         .map_err(|err| err.into())
 }
 
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> StdResult<Response> {
-    CONFIG.save(deps.storage, &msg.config)?;
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default().add_attribute("action", "migrate"))
 }

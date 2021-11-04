@@ -361,9 +361,6 @@ pub struct MoveParamsResponse {
     pub duration_nanos: u64,
 }
 
-/// This is a custom message type, not present in cw721-base
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
-pub struct MigrateMsg {
-    pub config: Config,
-}
+pub struct MigrateMsg {}
