@@ -131,10 +131,7 @@ pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary
 
 pub fn query_nft_info(deps: Deps, _env: Env, token_id: String) -> StdResult<Cw721NftInfoResponse> {
     let info = tokens().load(deps.storage, &token_id)?;
-    Ok(Cw721NftInfoResponse {
-        token_uri: None,
-        extension: info.as_cw721_metadata(),
-    })
+    Ok(info.as_cw721_nft_info())
 }
 
 pub fn query_all_nft_info(
@@ -149,10 +146,7 @@ pub fn query_all_nft_info(
             owner: info.owner.to_string(),
             approvals: humanize_approvals(&env.block, &info, include_expired),
         },
-        info: Cw721NftInfoResponse {
-            token_uri: None,
-            extension: info.as_cw721_metadata(),
-        },
+        info: info.as_cw721_nft_info(),
     })
 }
 
