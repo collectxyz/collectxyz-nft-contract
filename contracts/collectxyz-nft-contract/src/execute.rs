@@ -177,7 +177,7 @@ fn check_coordinates(storage: &dyn Storage, coords: &Coordinates) -> Result<(), 
 
 fn base64_token_image(coords: &Coordinates) -> String {
     let svg = format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 350 350"><g class="container"><rect style="width:188px;height:188px;fill:#000"/><text x="94" y="94" dominant-baseline="middle" text-anchor="middle" style="fill:#fff;font-family:serif;font-size:16px;text-align:center">[{}, {}, {}]</text></g></svg>"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 188 188"><g class="container"><rect style="width:188px;height:188px;fill:#000"/><text x="94" y="94" dominant-baseline="middle" text-anchor="middle" style="fill:#fff;font-family:serif;font-size:16px;text-align:center;">[{}, {}, {}]</text></g></svg>"#,
         coords.x, coords.y, coords.z
     );
     let base64_uri = format!("data:image/svg+xml;base64,{}", base64::encode(svg));
@@ -288,6 +288,20 @@ pub fn cw721_base_execute(
         .map_err(|err| err.into())
 }
 
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+    let cw721_contract = Cw721Contract::<XyzExtension, Empty>::default();
+    let num_tokens = 1 + cw721_contract.token_count(deps.storage)?;
+    for token_num in 1..num_tokens {
+        let token_id = format!("xyz #{}", token_num);
+        tokens().update(deps.storage, &token_id, |old_token| match old_token {
+            Some(old_token) => {
+                let mut new_token = old_token.clone();
+                new_token.image = Some(base64_token_image(&old_token.extension.coordinates));
+                Ok(new_token)
+            }
+            None => Err(StdError::generic_err("migration")),
+        })?;
+    }
+
     Ok(Response::default().add_attribute("action", "migrate"))
 }
