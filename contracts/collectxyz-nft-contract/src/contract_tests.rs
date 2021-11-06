@@ -137,7 +137,7 @@ fn minting() {
     assert_eq!(err, ContractError::Unauthorized {});
 
     // nonowner with valid signature can mint
-    let _ = execute(
+    let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info(NONOWNER, &[]),
@@ -147,6 +147,12 @@ fn minting() {
         },
     )
     .unwrap();
+
+    // ensure response event emits the minted token_id
+    assert!(res
+        .attributes
+        .iter()
+        .any(|attr| attr.key == "token_id" && attr.value == "xyz #1"));
 
     // random cannot mint a token with same coordinates twice
     let err = execute(
@@ -759,7 +765,7 @@ fn move_token() {
     println!("{:#?}", move_params);
 
     // nonowner can move with sufficient move fee paid
-    let _ = execute(
+    let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info(NONOWNER, &[move_params.fee.clone()]),
@@ -769,6 +775,12 @@ fn move_token() {
         },
     )
     .unwrap();
+
+    // ensure response event emits the moved token_id
+    assert!(res
+        .attributes
+        .iter()
+        .any(|attr| attr.key == "token_id" && attr.value == "xyz #1"));
 
     // look up the updated token
     let res = QueryHandler::query_xyz_nft_info(deps.as_ref(), nonowner_xyz_id.to_string()).unwrap();

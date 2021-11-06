@@ -93,7 +93,8 @@ pub fn execute_mint(
 
     Ok(Response::new()
         .add_attribute("action", "mint")
-        .add_attribute("minter", info.sender))
+        .add_attribute("minter", info.sender)
+        .add_attribute("token_id", token_id))
 }
 
 fn check_sufficient_funds(funds: Vec<Coin>, required: Coin) -> Result<(), ContractError> {
@@ -222,7 +223,8 @@ pub fn execute_move(
 
     Ok(Response::default()
         .add_attribute("action", "move")
-        .add_attribute("mover", info.sender))
+        .add_attribute("mover", info.sender)
+        .add_attribute("token_id", token_id))
 }
 
 pub fn execute_update_config(
