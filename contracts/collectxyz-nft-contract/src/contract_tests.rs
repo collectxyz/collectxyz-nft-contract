@@ -225,12 +225,12 @@ fn minting() {
         )
         .unwrap(),
     );
-    assert_eq!(info["name"], "xyz #1");
+    assert_eq!(info["extension"]["name"], "xyz #1");
     assert_eq!(
-        info["description"],
+        info["extension"]["description"],
         "Explore the metaverse, starting with xyz."
     );
-    if let serde_json::Value::String(image) = &info["image"] {
+    if let serde_json::Value::String(image) = &info["extension"]["image"] {
         assert!(image.starts_with("data:image/svg+xml;base64,"));
     } else {
         panic!("NftInfo response 'image' had wrong data type");
@@ -674,9 +674,7 @@ fn move_token() {
     .unwrap_err();
     assert_eq!(
         err,
-        ContractError::Std(StdError::not_found(
-            "cw721_base::state::TokenInfo<collectxyz::nft::XyzExtension>"
-        ))
+        ContractError::Std(StdError::not_found("collectxyz::nft::XyzTokenInfo"))
     );
 
     // can't move a token that isn't yours

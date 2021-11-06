@@ -3,12 +3,14 @@ use rsa::{hash::Hash, padding::PaddingScheme, PublicKey};
 use serde_json;
 use sha2::{Digest, Sha256};
 
-use collectxyz::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, MigrateMsg, XyzExtension};
+use collectxyz::nft::{
+    Config, Coordinates, ExecuteMsg, InstantiateMsg, MigrateMsg, XyzExtension, XyzTokenInfo,
+};
 use cosmwasm_std::{
     BankMsg, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError, StdResult, Storage,
 };
 use cw721::ContractInfoResponse;
-use cw721_base::{state::TokenInfo, Cw721Contract};
+use cw721_base::Cw721Contract;
 
 use crate::error::ContractError;
 use crate::state::{load_captcha_public_key, save_captcha_public_key, tokens, CONFIG, OWNER};
@@ -72,7 +74,7 @@ pub fn execute_mint(
     // create the token
     let num_tokens = 1 + num_tokens;
     let token_id = format!("xyz #{}", &num_tokens);
-    let token = TokenInfo::<XyzExtension> {
+    let token = XyzTokenInfo {
         owner: info.sender.clone(),
         approvals: vec![],
         name: token_id.clone(),
