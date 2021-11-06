@@ -179,17 +179,20 @@ pub struct XyzTokenInfo {
 }
 
 impl XyzTokenInfo {
-    pub fn as_cw721_metadata(&self) -> Cw721Metadata {
-        Cw721Metadata {
-            name: Some(self.name.clone()),
-            image: self.image.clone(),
-            description: Some(self.description.clone()),
-            attributes: Some(self.extension.as_traits()),
-            image_data: None,
-            external_url: None,
-            animation_url: None,
-            background_color: None,
-            youtube_url: None,
+    pub fn as_cw721_nft_info(&self) -> Cw721NftInfoResponse {
+        Cw721NftInfoResponse {
+            token_uri: None,
+            extension: Cw721Metadata {
+                name: Some(self.name.clone()),
+                image: self.image.clone(),
+                description: Some(self.description.clone()),
+                attributes: Some(self.extension.as_traits()),
+                image_data: None,
+                external_url: None,
+                animation_url: None,
+                background_color: None,
+                youtube_url: None,
+            },
         }
     }
 }
@@ -457,7 +460,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn xyz_token_info_as_cw721_metadata() {
+    fn xyz_token_info_as_cw721_nft_info() {
         let info = XyzTokenInfo {
             name: "xyz #1".to_string(),
             owner: Addr::unchecked("test owner"),
@@ -472,33 +475,36 @@ mod tests {
         };
 
         assert_eq!(
-            info.as_cw721_metadata(),
-            Cw721Metadata {
-                name: Some("xyz #1".to_string()),
-                description: Some("test description".to_string()),
-                image: Some("test image".to_string()),
-                attributes: Some(vec![
-                    Cw721Trait {
-                        display_type: None,
-                        trait_type: "x".to_string(),
-                        value: "1".to_string(),
-                    },
-                    Cw721Trait {
-                        display_type: None,
-                        trait_type: "y".to_string(),
-                        value: "2".to_string(),
-                    },
-                    Cw721Trait {
-                        display_type: None,
-                        trait_type: "z".to_string(),
-                        value: "3".to_string(),
-                    },
-                ]),
-                image_data: None,
-                animation_url: None,
-                youtube_url: None,
-                external_url: None,
-                background_color: None
+            info.as_cw721_nft_info(),
+            Cw721NftInfoResponse {
+                token_uri: None,
+                extension: Cw721Metadata {
+                    name: Some("xyz #1".to_string()),
+                    description: Some("test description".to_string()),
+                    image: Some("test image".to_string()),
+                    attributes: Some(vec![
+                        Cw721Trait {
+                            display_type: None,
+                            trait_type: "x".to_string(),
+                            value: "1".to_string(),
+                        },
+                        Cw721Trait {
+                            display_type: None,
+                            trait_type: "y".to_string(),
+                            value: "2".to_string(),
+                        },
+                        Cw721Trait {
+                            display_type: None,
+                            trait_type: "z".to_string(),
+                            value: "3".to_string(),
+                        },
+                    ]),
+                    image_data: None,
+                    animation_url: None,
+                    youtube_url: None,
+                    external_url: None,
+                    background_color: None
+                }
             }
         )
     }
