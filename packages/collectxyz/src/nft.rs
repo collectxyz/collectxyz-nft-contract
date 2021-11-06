@@ -2,12 +2,55 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 
-use cosmwasm_std::{Binary, Coin, StdError, StdResult, Timestamp, Uint128};
-use cw721::Expiration;
-use cw721_base::{
-    msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg},
-    state::TokenInfo,
-};
+use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult, Timestamp, Uint128};
+use cw721::{Expiration, OwnerOfResponse};
+use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg};
+use cw721_base::state::Approval;
+
+// ----------------- begin CW721 ^0.9.2 shim ----------------- //
+
+// adapted from: https://github.com/CosmWasm/cw-nfts/blob/5e1e72a3682f988d4504b94f2e203dd4a5a99ad9/contracts/cw721-metadata-onchain/src/lib.rs#L7-L26
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
+pub struct Cw721Trait {
+    pub display_type: Option<String>,
+    pub trait_type: String,
+    pub value: String,
+}
+
+// see: https://docs.opensea.io/docs/metadata-standards
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
+pub struct Cw721Metadata {
+    pub image: Option<String>,
+    pub image_data: Option<String>,
+    pub external_url: Option<String>,
+    pub description: Option<String>,
+    pub name: Option<String>,
+    pub attributes: Option<Vec<Cw721Trait>>,
+    pub background_color: Option<String>,
+    pub animation_url: Option<String>,
+    pub youtube_url: Option<String>,
+}
+
+// adapted from: https://github.com/CosmWasm/cw-nfts/blob/5e1e72a3682f988d4504b94f2e203dd4a5a99ad9/packages/cw721/src/query.rs#L93-L109
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct Cw721NftInfoResponse {
+    /// Universal resource identifier for this NFT
+    /// Should point to a JSON file that conforms to the ERC721
+    /// Metadata JSON Schema
+    pub token_uri: Option<String>,
+    /// You can add any custom metadata here when you extend cw721-base
+    pub extension: Cw721Metadata,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct Cw721AllNftInfoResponse {
+    /// Who can transfer the token
+    pub access: OwnerOfResponse,
+    /// Data on the token itself,
+    pub info: Cw721NftInfoResponse,
+}
+
+// ----------------- end CW721 ^0.9.2 shim----------------- //
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
@@ -103,9 +146,53 @@ impl XyzExtension {
     pub fn has_arrived(&self, current_time: Timestamp) -> bool {
         self.arrival <= current_time
     }
+
+    pub fn as_traits(&self) -> Vec<Cw721Trait> {
+        vec![
+            Cw721Trait {
+                display_type: None,
+                trait_type: "x".to_string(),
+                value: self.coordinates.x.to_string(),
+            },
+            Cw721Trait {
+                display_type: None,
+                trait_type: "y".to_string(),
+                value: self.coordinates.y.to_string(),
+            },
+            Cw721Trait {
+                display_type: None,
+                trait_type: "z".to_string(),
+                value: self.coordinates.z.to_string(),
+            },
+        ]
+    }
 }
 
-pub type XyzTokenInfo = TokenInfo<XyzExtension>;
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct XyzTokenInfo {
+    pub owner: Addr,
+    pub approvals: Vec<Approval>,
+    pub name: String,
+    pub description: String,
+    pub image: Option<String>,
+    pub extension: XyzExtension,
+}
+
+impl XyzTokenInfo {
+    pub fn as_cw721_metadata(&self) -> Cw721Metadata {
+        Cw721Metadata {
+            name: Some(self.name.clone()),
+            image: self.image.clone(),
+            description: Some(self.description.clone()),
+            attributes: Some(self.extension.as_traits()),
+            image_data: None,
+            external_url: None,
+            animation_url: None,
+            background_color: None,
+            youtube_url: None,
+        }
+    }
+}
 
 /// This overrides the ExecuteMsg enum defined in cw721-base
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -364,3 +451,55 @@ pub struct MoveParamsResponse {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct MigrateMsg {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn xyz_token_info_as_cw721_metadata() {
+        let info = XyzTokenInfo {
+            name: "xyz #1".to_string(),
+            owner: Addr::unchecked("test owner"),
+            description: "test description".to_string(),
+            image: Some("test image".to_string()),
+            approvals: vec![],
+            extension: XyzExtension {
+                coordinates: Coordinates { x: 1, y: 2, z: 3 },
+                prev_coordinates: None,
+                arrival: Timestamp::from_nanos(1),
+            },
+        };
+
+        assert_eq!(
+            info.as_cw721_metadata(),
+            Cw721Metadata {
+                name: Some("xyz #1".to_string()),
+                description: Some("test description".to_string()),
+                image: Some("test image".to_string()),
+                attributes: Some(vec![
+                    Cw721Trait {
+                        display_type: None,
+                        trait_type: "x".to_string(),
+                        value: "1".to_string(),
+                    },
+                    Cw721Trait {
+                        display_type: None,
+                        trait_type: "y".to_string(),
+                        value: "2".to_string(),
+                    },
+                    Cw721Trait {
+                        display_type: None,
+                        trait_type: "z".to_string(),
+                        value: "3".to_string(),
+                    },
+                ]),
+                image_data: None,
+                animation_url: None,
+                youtube_url: None,
+                external_url: None,
+                background_color: None
+            }
+        )
+    }
+}

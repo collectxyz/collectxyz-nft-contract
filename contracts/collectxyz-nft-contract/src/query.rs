@@ -1,12 +1,12 @@
 use rsa::pkcs8::ToPublicKey;
 
 use collectxyz::nft::{
-    Config, Coordinates, MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo,
-    XyzTokensResponse,
+    Config, Coordinates, Cw721AllNftInfoResponse, Cw721NftInfoResponse, MoveParamsResponse,
+    QueryMsg, XyzExtension, XyzTokenInfo, XyzTokensResponse,
 };
-use cosmwasm_std::{Binary, Deps, Empty, Env, Order, StdError, StdResult};
+use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
 use cw0::maybe_addr;
-use cw721::NumTokensResponse;
+use cw721::{NumTokensResponse, OwnerOfResponse};
 use cw721_base::Cw721Contract;
 use cw_storage_plus::Bound;
 
@@ -114,5 +114,64 @@ pub fn query_move_params(
 
 pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let cw721_contract = Cw721Contract::<XyzExtension, Empty>::default();
-    cw721_contract.query(deps, env, msg.into())
+    match msg {
+        QueryMsg::NftInfo { token_id } => to_binary(&query_nft_info(deps, env, token_id)?),
+        QueryMsg::AllNftInfo {
+            token_id,
+            include_expired,
+        } => to_binary(&query_all_nft_info(
+            deps,
+            env,
+            token_id,
+            include_expired.unwrap_or(false),
+        )?),
+        _ => cw721_contract.query(deps, env, msg.into()),
+    }
+}
+
+pub fn query_nft_info(deps: Deps, _env: Env, token_id: String) -> StdResult<Cw721NftInfoResponse> {
+    let info = tokens().load(deps.storage, &token_id)?;
+    Ok(Cw721NftInfoResponse {
+        token_uri: None,
+        extension: info.as_cw721_metadata(),
+    })
+}
+
+pub fn query_all_nft_info(
+    deps: Deps,
+    env: Env,
+    token_id: String,
+    include_expired: bool,
+) -> StdResult<Cw721AllNftInfoResponse> {
+    let info = tokens().load(deps.storage, &token_id)?;
+    Ok(Cw721AllNftInfoResponse {
+        access: OwnerOfResponse {
+            owner: info.owner.to_string(),
+            approvals: humanize_approvals(&env.block, &info, include_expired),
+        },
+        info: Cw721NftInfoResponse {
+            token_uri: None,
+            extension: info.as_cw721_metadata(),
+        },
+    })
+}
+
+// adapted from: https://github.com/CosmWasm/cw-nfts/blob/5e1e72a3682f988d4504b94f2e203dd4a5a99ad9/contracts/cw721-base/src/query.rs#L211-L228
+fn humanize_approvals(
+    block: &BlockInfo,
+    info: &XyzTokenInfo,
+    include_expired: bool,
+) -> Vec<cw721::Approval> {
+    info.approvals
+        .iter()
+        .filter(|apr| include_expired || !apr.is_expired(block))
+        .map(humanize_approval)
+        .collect()
+}
+
+fn humanize_approval(approval: &cw721_base::state::Approval) -> cw721::Approval {
+    cw721::Approval {
+        spender: approval.spender.to_string(),
+        expires: approval.expires,
+    }
 }
