@@ -1,13 +1,13 @@
 use rsa::pkcs8::ToPublicKey;
 
 use collectxyz::nft::{
-    Config, Coordinates, Cw721AllNftInfoResponse, Cw721NftInfoResponse, MoveParamsResponse,
-    QueryMsg, XyzExtension, XyzTokenInfo, XyzTokensResponse,
+    full_token_id, Config, Coordinates, Cw721AllNftInfoResponse, Cw721NftInfoResponse,
+    MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo, XyzTokensResponse,
 };
 use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
 use cw0::maybe_addr;
 use cw721::{NumTokensResponse, OwnerOfResponse};
-use cw721_base::Cw721Contract;
+use cw721_base::{msg::QueryMsg as Cw721QueryMsg, Cw721Contract};
 use cw_storage_plus::Bound;
 
 use crate::state::{load_captcha_public_key, tokens, CONFIG};
@@ -114,18 +114,22 @@ pub fn query_move_params(
 
 pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let cw721_contract = Cw721Contract::<XyzExtension, Empty>::default();
-    match msg {
-        QueryMsg::NftInfo { token_id } => to_binary(&query_nft_info(deps, env, token_id)?),
-        QueryMsg::AllNftInfo {
+
+    let cw721_msg: Cw721QueryMsg = msg.into();
+    match cw721_msg {
+        Cw721QueryMsg::NftInfo { token_id } => {
+            to_binary(&query_nft_info(deps, env, full_token_id(token_id))?)
+        }
+        Cw721QueryMsg::AllNftInfo {
             token_id,
             include_expired,
         } => to_binary(&query_all_nft_info(
             deps,
             env,
-            token_id,
+            full_token_id(token_id),
             include_expired.unwrap_or(false),
         )?),
-        _ => cw721_contract.query(deps, env, msg.into()),
+        _ => cw721_contract.query(deps, env, cw721_msg),
     }
 }
 
