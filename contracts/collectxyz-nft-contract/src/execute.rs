@@ -73,7 +73,7 @@ pub fn execute_mint(
 
     // create the token
     let num_tokens = 1 + num_tokens;
-    let token_id = format!("{}", &num_tokens);
+    let token_id = num_tokens.to_string();
     let token = XyzTokenInfo {
         owner: info.sender.clone(),
         approvals: vec![],
@@ -293,7 +293,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
     let num_tokens = 1 + cw721_contract.token_count(deps.storage)?;
     for token_num in 1..num_tokens {
         let token_id = format!("xyz #{}", token_num);
-        let new_token_id = format!("#{}", token_num);
+        let new_token_id = token_num.to_string();
         let token = tokens().load(deps.storage, &token_id)?;
         let mut new_token = token.clone();
         new_token.name = new_token_id.to_string();
