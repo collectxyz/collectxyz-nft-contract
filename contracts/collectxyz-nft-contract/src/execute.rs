@@ -391,7 +391,7 @@ mod test {
                 },
             },
             XyzTokenInfo {
-                owner: Addr::unchecked(ADDR1),
+                owner: Addr::unchecked(ADDR2),
                 approvals: vec![],
                 name: "xyz #2".to_string(),
                 description: "".to_string(),
