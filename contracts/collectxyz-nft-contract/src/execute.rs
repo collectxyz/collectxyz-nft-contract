@@ -293,12 +293,13 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
     let num_tokens = 1 + cw721_contract.token_count(deps.storage)?;
     for token_num in 1..num_tokens {
         let token_id = format!("xyz #{}", token_num);
-        tokens().update(deps.storage, &token_id, |old_token| match old_token {
-            Some(old_token) => {
-                let mut new_token = old_token.clone();
-                new_token.image = Some(base64_token_image(&old_token.extension.coordinates));
-                Ok(new_token)
-            }
+        let new_token_id = format!("#{}", token_num);
+        let token = tokens().load(deps.storage, &token_id)?;
+        let mut new_token = token.clone();
+        new_token.name = new_token_id.clone();
+        tokens().remove(deps.storage, &token_id)?;
+        tokens().update(deps.storage, &new_token_id, |old| match old {
+            Some(_) => Ok(new_token),
             None => Err(StdError::generic_err("migration")),
         })?;
     }
