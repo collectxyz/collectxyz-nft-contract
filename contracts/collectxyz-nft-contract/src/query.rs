@@ -256,3 +256,213 @@ fn humanize_approval(approval: &cw721_base::state::Approval) -> cw721::Approval 
         expires: approval.expires,
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use collectxyz::nft::{Cw721AllNftInfoResponse, Cw721Metadata, Cw721Trait};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use cosmwasm_std::{from_binary, Addr, DepsMut, Timestamp};
+
+    const ADDR1: &str = "addr1";
+    const ADDR2: &str = "addr2";
+
+    fn token_examples() -> Vec<XyzTokenInfo> {
+        vec![
+            XyzTokenInfo {
+                owner: Addr::unchecked(ADDR1),
+                approvals: vec![],
+                name: "xyz #1".to_string(),
+                description: "".to_string(),
+                image: None,
+                extension: XyzExtension {
+                    coordinates: Coordinates { x: 1, y: 1, z: 1 },
+                    arrival: Timestamp::from_nanos(0),
+                    prev_coordinates: None,
+                },
+            },
+            XyzTokenInfo {
+                owner: Addr::unchecked(ADDR2),
+                approvals: vec![],
+                name: "xyz #2".to_string(),
+                description: "".to_string(),
+                image: None,
+                extension: XyzExtension {
+                    coordinates: Coordinates { x: 2, y: 2, z: 2 },
+                    arrival: Timestamp::from_nanos(0),
+                    prev_coordinates: None,
+                },
+            },
+        ]
+    }
+
+    fn setup_storage(deps: DepsMut) {
+        for token in token_examples().iter() {
+            tokens().save(deps.storage, &token.name, &token).unwrap();
+        }
+    }
+
+    #[test]
+    fn nft_info() {
+        let mut deps = mock_dependencies(&[]);
+        setup_storage(deps.as_mut());
+
+        let expected = Cw721NftInfoResponse {
+            token_uri: None,
+            extension: Cw721Metadata {
+                image: Some(
+                    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaW5ZTWluIG1lZXQiIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48ZyBjbGFzcz0iY29udGFpbmVyIj48cmVjdCBzdHlsZT0id2lkdGg6MjQwcHg7aGVpZ2h0OjI0MHB4O2ZpbGw6IzAwMDsiLz48dGV4dCB4PSIxMjAiIHk9IjEyMCIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9ImZpbGw6I2ZmZjtmb250LWZhbWlseTpzZXJpZjtmb250LXNpemU6MTZweDt0ZXh0LWFsaWduOmNlbnRlcjsiPlsxLCAxLCAxXTwvdGV4dD48L2c+PC9zdmc+".to_string(),
+                ),
+                image_data: None,
+                external_url: None,
+                description: Some("".to_string()
+                ),
+                name: Some(
+                    "xyz #1".to_string()
+                ),
+                attributes: Some(
+                    vec![
+                        Cw721Trait {
+                            display_type: None,
+                            trait_type: "x".to_string(),
+                            value: "1".to_string(),
+                        },
+                        Cw721Trait {
+                            display_type: None,
+                            trait_type: "y".to_string(),
+                            value: "1".to_string(),
+                        },
+                        Cw721Trait {
+                            display_type: None,
+                            trait_type: "z".to_string(),
+                            value: "1".to_string(),
+                        },
+                    ],
+                ),
+                background_color: None,
+                animation_url: None,
+                youtube_url: None,
+            },
+        };
+
+        let info = from_binary::<Cw721NftInfoResponse>(
+            &cw721_base_query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::NftInfo {
+                    token_id: "1".to_string(),
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(info, expected);
+
+        let all_info = from_binary::<Cw721AllNftInfoResponse>(
+            &cw721_base_query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::AllNftInfo {
+                    token_id: "1".to_string(),
+                    include_expired: None,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            all_info,
+            Cw721AllNftInfoResponse {
+                access: OwnerOfResponse {
+                    owner: ADDR1.to_string(),
+                    approvals: vec![]
+                },
+                info: expected.clone()
+            }
+        );
+    }
+
+    #[test]
+    fn list_tokens() {
+        let mut deps = mock_dependencies(&[]);
+        setup_storage(deps.as_mut());
+
+        // list tokens for owner
+        let res = from_binary::<TokensResponse>(
+            &cw721_base_query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::Tokens {
+                    owner: ADDR1.to_string(),
+                    start_after: None,
+                    limit: None,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(res.tokens, vec!["1".to_string()]);
+
+        // list all tokens
+        let res = from_binary::<TokensResponse>(
+            &cw721_base_query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::AllTokens {
+                    start_after: None,
+                    limit: None,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(res.tokens, vec!["1".to_string(), "2".to_string()]);
+    }
+
+    #[test]
+    fn owner_of() {
+        let mut deps = mock_dependencies(&[]);
+        setup_storage(deps.as_mut());
+
+        let res = from_binary::<OwnerOfResponse>(
+            &cw721_base_query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::OwnerOf {
+                    token_id: "1".to_string(),
+                    include_expired: None,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            res,
+            OwnerOfResponse {
+                owner: ADDR1.to_string(),
+                approvals: vec![]
+            }
+        );
+
+        let res = from_binary::<OwnerOfResponse>(
+            &cw721_base_query(
+                deps.as_ref(),
+                mock_env(),
+                QueryMsg::OwnerOf {
+                    token_id: "2".to_string(),
+                    include_expired: None,
+                },
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            res,
+            OwnerOfResponse {
+                owner: ADDR2.to_string(),
+                approvals: vec![]
+            }
+        );
+    }
+}
