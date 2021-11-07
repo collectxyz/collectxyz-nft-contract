@@ -299,7 +299,7 @@ mod test {
 
     fn setup_storage(deps: DepsMut) {
         for token in token_examples().iter() {
-            tokens().save(deps.storage, &token.name, &token).unwrap();
+            tokens().save(deps.storage, &token.name, token).unwrap();
         }
     }
 
@@ -378,7 +378,7 @@ mod test {
                     owner: ADDR1.to_string(),
                     approvals: vec![]
                 },
-                info: expected.clone()
+                info: expected
             }
         );
     }
