@@ -1,8 +1,9 @@
 use rsa::pkcs8::ToPublicKey;
 
 use collectxyz::nft::{
-    full_token_id, numeric_token_id, Config, Coordinates, Cw721AllNftInfoResponse, Cw721NftInfoResponse, Cw721TokensResponse,
-    MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo, XyzTokensResponse,
+    full_token_id, numeric_token_id, Config, Coordinates, Cw721AllNftInfoResponse,
+    Cw721NftInfoResponse, Cw721TokensResponse, MoveParamsResponse, QueryMsg, XyzExtension,
+    XyzTokenInfo, XyzTokensResponse,
 };
 use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
 use cw0::maybe_addr;
@@ -182,8 +183,13 @@ pub fn query_tokens(
 
     let res: Result<Vec<_>, _> = pks.iter().map(|v| String::from_utf8(v.to_vec())).collect();
     let tokens = res.map_err(StdError::invalid_utf8)?;
-    let numeric_tokens: Vec<String> = tokens.iter().map(|s| numeric_token_id(s.to_string())).collect();
-    Ok(Cw721TokensResponse { tokens: numeric_tokens })
+    let numeric_tokens: Vec<String> = tokens
+        .iter()
+        .map(|s| numeric_token_id(s.to_string()))
+        .collect();
+    Ok(Cw721TokensResponse {
+        tokens: numeric_tokens,
+    })
 }
 
 pub fn query_all_tokens(
@@ -199,10 +205,14 @@ pub fn query_all_tokens(
         .take(limit)
         .map(|item| item.map(|(k, _)| String::from_utf8_lossy(&k).to_string()))
         .collect();
-        
     let tokens = res.map_err(StdError::invalid_utf8)?;
-    let numeric_tokens: Vec<String> = tokens.iter().map(|s| numeric_token_id(s.to_string())).collect();
-    Ok(Cw721TokensResponse { tokens: numeric_tokens })
+    let numeric_tokens: Vec<String> = tokens
+        .iter()
+        .map(|s| numeric_token_id(s.to_string()))
+        .collect();
+    Ok(Cw721TokensResponse {
+        tokens: numeric_tokens,
+    })
 }
 
 // adapted from: https://github.com/CosmWasm/cw-nfts/blob/5e1e72a3682f988d4504b94f2e203dd4a5a99ad9/contracts/cw721-base/src/query.rs#L211-L228
