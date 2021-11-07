@@ -152,7 +152,7 @@ fn minting() {
     assert!(res
         .attributes
         .iter()
-        .any(|attr| attr.key == "token_id" && attr.value == "xyz #1"));
+        .any(|attr| attr.key == "token_id" && attr.value == "1"));
 
     // random cannot mint a token with same coordinates twice
     let err = execute(
@@ -226,7 +226,7 @@ fn minting() {
             deps.as_ref(),
             mock_env(),
             QueryMsg::NftInfo {
-                token_id: String::from("xyz #1"),
+                token_id: String::from("1"),
             },
         )
         .unwrap(),
@@ -778,7 +778,7 @@ fn move_token() {
     assert!(res
         .attributes
         .iter()
-        .any(|attr| attr.key == "token_id" && attr.value == "xyz #1"));
+        .any(|attr| attr.key == "token_id" && attr.value == "1"));
 
     // look up the updated token
     let res = QueryHandler::query_xyz_nft_info(deps.as_ref(), nonowner_xyz_id.to_string()).unwrap();

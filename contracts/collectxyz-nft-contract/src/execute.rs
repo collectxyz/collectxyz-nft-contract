@@ -3,14 +3,14 @@ use serde_json;
 use sha2::{Digest, Sha256};
 
 use collectxyz::nft::{
-    base64_token_image, Config, Coordinates, ExecuteMsg, InstantiateMsg, MigrateMsg, XyzExtension,
-    XyzTokenInfo,
+    base64_token_image, full_token_id, numeric_token_id, Config, Coordinates, ExecuteMsg,
+    InstantiateMsg, MigrateMsg, XyzExtension, XyzTokenInfo,
 };
 use cosmwasm_std::{
     BankMsg, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError, StdResult, Storage,
 };
 use cw721::ContractInfoResponse;
-use cw721_base::Cw721Contract;
+use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
 
 use crate::error::ContractError;
 use crate::state::{load_captcha_public_key, save_captcha_public_key, tokens, CONFIG, OWNER};
@@ -96,7 +96,7 @@ pub fn execute_mint(
     Ok(Response::new()
         .add_attribute("action", "mint")
         .add_attribute("minter", info.sender)
-        .add_attribute("token_id", token_id))
+        .add_attribute("token_id", numeric_token_id(token_id)))
 }
 
 fn check_sufficient_funds(funds: Vec<Coin>, required: Coin) -> Result<(), ContractError> {
@@ -217,7 +217,7 @@ pub fn execute_move(
     Ok(Response::default()
         .add_attribute("action", "move")
         .add_attribute("mover", info.sender)
-        .add_attribute("token_id", token_id))
+        .add_attribute("token_id", numeric_token_id(token_id)))
 }
 
 pub fn execute_update_config(
@@ -273,9 +273,42 @@ pub fn cw721_base_execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     let cw721_contract = Cw721Contract::<XyzExtension, Empty>::default();
+    let cw721_msg: Cw721ExecuteMsg<XyzExtension> = msg.into();
+    let cw721_msg_full_token_id = match cw721_msg {
+        Cw721ExecuteMsg::Approve {
+            spender,
+            token_id,
+            expires,
+        } => Cw721ExecuteMsg::Approve {
+            spender,
+            expires,
+            token_id: full_token_id(token_id),
+        },
+        Cw721ExecuteMsg::Revoke { spender, token_id } => Cw721ExecuteMsg::Revoke {
+            spender,
+            token_id: full_token_id(token_id),
+        },
+        Cw721ExecuteMsg::TransferNft {
+            recipient,
+            token_id,
+        } => Cw721ExecuteMsg::TransferNft {
+            recipient,
+            token_id: full_token_id(token_id),
+        },
+        Cw721ExecuteMsg::SendNft {
+            contract,
+            token_id,
+            msg,
+        } => Cw721ExecuteMsg::SendNft {
+            contract,
+            msg,
+            token_id: full_token_id(token_id),
+        },
+        _ => cw721_msg,
+    };
 
     cw721_contract
-        .execute(deps, env, info, msg.into())
+        .execute(deps, env, info, cw721_msg_full_token_id)
         .map_err(|err| err.into())
 }
 

@@ -210,6 +210,14 @@ pub fn base64_token_image(coords: &Coordinates) -> String {
     base64_uri
 }
 
+pub fn full_token_id(numeric_token_id: String) -> String {
+    format!("xyz #{}", numeric_token_id)
+}
+
+pub fn numeric_token_id(full_token_id: String) -> String {
+    full_token_id[5..].to_string()
+}
+
 /// This overrides the ExecuteMsg enum defined in cw721-base
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
