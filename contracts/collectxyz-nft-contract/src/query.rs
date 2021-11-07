@@ -2,12 +2,12 @@ use rsa::pkcs8::ToPublicKey;
 
 use collectxyz::nft::{
     full_token_id, numeric_token_id, Config, Coordinates, Cw721AllNftInfoResponse,
-    Cw721NftInfoResponse, Cw721TokensResponse, MoveParamsResponse, QueryMsg, XyzExtension,
-    XyzTokenInfo, XyzTokensResponse,
+    Cw721NftInfoResponse, MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo,
+    XyzTokensResponse,
 };
 use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
 use cw0::maybe_addr;
-use cw721::{NumTokensResponse, OwnerOfResponse};
+use cw721::{NumTokensResponse, OwnerOfResponse, TokensResponse};
 use cw721_base::{msg::QueryMsg as Cw721QueryMsg, Cw721Contract};
 use cw_storage_plus::Bound;
 
@@ -138,6 +138,15 @@ pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary
         Cw721QueryMsg::AllTokens { start_after, limit } => {
             to_binary(&query_all_tokens(deps, start_after, limit)?)
         }
+        Cw721QueryMsg::OwnerOf {
+            token_id,
+            include_expired,
+        } => to_binary(&owner_of(
+            deps,
+            env,
+            full_token_id(token_id),
+            include_expired.unwrap_or(false),
+        )?),
         _ => cw721_contract.query(deps, env, cw721_msg),
     }
 }
@@ -168,7 +177,7 @@ pub fn query_tokens(
     owner: String,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Cw721TokensResponse> {
+) -> StdResult<TokensResponse> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     let start = start_after.map(Bound::exclusive);
 
@@ -187,7 +196,7 @@ pub fn query_tokens(
         .iter()
         .map(|s| numeric_token_id(s.to_string()))
         .collect();
-    Ok(Cw721TokensResponse {
+    Ok(TokensResponse {
         tokens: numeric_tokens,
     })
 }
@@ -196,7 +205,7 @@ pub fn query_all_tokens(
     deps: Deps,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<Cw721TokensResponse> {
+) -> StdResult<TokensResponse> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     let start = start_after.map(Bound::exclusive);
 
@@ -210,8 +219,21 @@ pub fn query_all_tokens(
         .iter()
         .map(|s| numeric_token_id(s.to_string()))
         .collect();
-    Ok(Cw721TokensResponse {
+    Ok(TokensResponse {
         tokens: numeric_tokens,
+    })
+}
+
+pub fn owner_of(
+    deps: Deps,
+    env: Env,
+    token_id: String,
+    include_expired: bool,
+) -> StdResult<OwnerOfResponse> {
+    let info = tokens().load(deps.storage, &token_id)?;
+    Ok(OwnerOfResponse {
+        owner: info.owner.to_string(),
+        approvals: humanize_approvals(&env.block, &info, include_expired),
     })
 }
 

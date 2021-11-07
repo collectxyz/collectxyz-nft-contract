@@ -50,13 +50,6 @@ pub struct Cw721AllNftInfoResponse {
     pub info: Cw721NftInfoResponse,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct Cw721TokensResponse {
-    /// Contains all token_ids in lexicographical ordering
-    /// If there are more than `limit`, use `start_from` in future queries
-    /// to achieve pagination.
-    pub tokens: Vec<String>,
-}
 // ----------------- end CW721 ^0.9.2 shim----------------- //
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
