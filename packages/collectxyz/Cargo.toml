@@ -12,6 +12,7 @@ repository = "https://github.com/collectxyz/collectxyz-nft-contract"
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]
+base64 = "0.13.0"
 schemars = "0.8.3"
 serde = { version = "1.0.127", default-features = false, features = ["derive"] }
 cosmwasm-std = { version = "0.16.0" }
