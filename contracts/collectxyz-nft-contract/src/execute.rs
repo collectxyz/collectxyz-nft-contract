@@ -177,7 +177,7 @@ fn check_coordinates(storage: &dyn Storage, coords: &Coordinates) -> Result<(), 
 
 fn base64_token_image(coords: &Coordinates) -> String {
     let svg = format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 188 188"><g class="container"><rect style="width:188px;height:188px;fill:#000"/><text x="94" y="94" dominant-baseline="middle" text-anchor="middle" style="fill:#fff;font-family:serif;font-size:16px;text-align:center;">[{}, {}, {}]</text></g></svg>"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 240 240"><g class="container"><rect style="width:240px;height:240px;fill:#000;"/><text x="120" y="120" dominant-baseline="middle" text-anchor="middle" style="fill:#fff;font-family:serif;font-size:16px;text-align:center;">[{}, {}, {}]</text></g></svg>"#,
         coords.x, coords.y, coords.z
     );
     let base64_uri = format!("data:image/svg+xml;base64,{}", base64::encode(svg));
