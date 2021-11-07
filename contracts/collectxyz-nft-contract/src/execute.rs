@@ -7,10 +7,10 @@ use collectxyz::nft::{
     InstantiateMsg, MigrateMsg, XyzExtension, XyzTokenInfo,
 };
 use cosmwasm_std::{
-    Attribute, BankMsg, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
+    Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
     StdResult, Storage,
 };
-use cw721::ContractInfoResponse;
+use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
 
 use crate::error::ContractError;
@@ -308,25 +308,233 @@ pub fn cw721_base_execute(
         _ => cw721_msg,
     };
 
-    match cw721_contract.execute(deps, env, info, cw721_msg_full_token_id) {
-        Ok(mut response) => {
-            response.attributes = response
-                .attributes
-                .iter()
-                .map(|attr| {
-                    if attr.key == "token_id" {
-                        Attribute::new("token_id", numeric_token_id(attr.value.to_string()))
-                    } else {
-                        attr.clone()
-                    }
-                })
-                .collect();
-            Ok(response)
-        }
-        Err(err) => Err(err.into()),
-    }
+    let mut response = (match cw721_msg_full_token_id {
+        Cw721ExecuteMsg::SendNft {
+            contract,
+            token_id,
+            msg,
+        } => execute_send_nft(deps, env, info, contract, token_id, msg),
+        _ => cw721_contract
+            .execute(deps, env, info, cw721_msg_full_token_id)
+            .map_err(|err| err.into()),
+    })?;
+
+    response.attributes = response
+        .attributes
+        .iter()
+        .map(|attr| {
+            if attr.key == "token_id" {
+                Attribute::new("token_id", numeric_token_id(attr.value.to_string()))
+            } else {
+                attr.clone()
+            }
+        })
+        .collect();
+    Ok(response)
+}
+
+pub fn execute_send_nft(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    contract: String,
+    token_id: String,
+    msg: Binary,
+) -> Result<Response, ContractError> {
+    let cw721_contract = Cw721Contract::<XyzExtension, Empty>::default();
+    // Transfer token
+    cw721_contract._transfer_nft(deps, &env, &info, &contract, &token_id)?;
+
+    let send = Cw721ReceiveMsg {
+        sender: info.sender.to_string(),
+        token_id: numeric_token_id(token_id.clone()),
+        msg,
+    };
+
+    // Send message
+    Ok(Response::new()
+        .add_message(send.into_cosmos_msg(contract.clone())?)
+        .add_attribute("action", "send_nft")
+        .add_attribute("sender", info.sender)
+        .add_attribute("recipient", contract)
+        .add_attribute("token_id", token_id))
 }
 
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default().add_attribute("action", "migrate"))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{to_binary, Addr, Timestamp};
+    use cw721::{Cw721ReceiveMsg, Expiration};
+    use cw721_base::state::Approval;
+
+    const ADDR1: &str = "addr1";
+    const ADDR2: &str = "addr2";
+
+    fn token_examples() -> Vec<XyzTokenInfo> {
+        vec![
+            XyzTokenInfo {
+                owner: Addr::unchecked(ADDR1),
+                approvals: vec![],
+                name: "xyz #1".to_string(),
+                description: "".to_string(),
+                image: None,
+                extension: XyzExtension {
+                    coordinates: Coordinates { x: 1, y: 1, z: 1 },
+                    arrival: Timestamp::from_nanos(0),
+                    prev_coordinates: None,
+                },
+            },
+            XyzTokenInfo {
+                owner: Addr::unchecked(ADDR1),
+                approvals: vec![],
+                name: "xyz #2".to_string(),
+                description: "".to_string(),
+                image: None,
+                extension: XyzExtension {
+                    coordinates: Coordinates { x: 2, y: 2, z: 2 },
+                    arrival: Timestamp::from_nanos(0),
+                    prev_coordinates: None,
+                },
+            },
+        ]
+    }
+
+    fn setup_storage(deps: DepsMut) {
+        for token in token_examples().iter() {
+            tokens().save(deps.storage, &token.name, &token).unwrap();
+        }
+    }
+
+    #[test]
+    fn cw721_transfer() {
+        let mut deps = mock_dependencies(&[]);
+        setup_storage(deps.as_mut());
+
+        // transfer xyz #1
+        let res = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::TransferNft {
+                recipient: ADDR2.to_string(),
+                token_id: "1".to_string(),
+            },
+        )
+        .unwrap();
+
+        // ensure response event emits the transferred token_id
+        assert!(res
+            .attributes
+            .iter()
+            .any(|attr| attr.key == "token_id" && attr.value == "1"));
+
+        // check ownership was updated
+        let token = tokens().load(&deps.storage, "xyz #1").unwrap();
+        assert_eq!(token.name, "xyz #1");
+        assert_eq!(token.owner.to_string(), ADDR2.to_string());
+    }
+
+    #[test]
+    fn cw721_approve_revoke() {
+        let mut deps = mock_dependencies(&[]);
+        setup_storage(deps.as_mut());
+
+        // grant an approval
+        let res = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::Approve {
+                spender: ADDR2.to_string(),
+                token_id: "1".to_string(),
+                expires: None,
+            },
+        )
+        .unwrap();
+
+        // ensure response event emits the transferred token_id
+        assert!(res
+            .attributes
+            .iter()
+            .any(|attr| attr.key == "token_id" && attr.value == "1"));
+
+        // check approval was added
+        let token = tokens().load(&deps.storage, "xyz #1").unwrap();
+        assert_eq!(token.name, "xyz #1");
+        assert_eq!(
+            token.approvals,
+            vec![Approval {
+                spender: Addr::unchecked(ADDR2),
+                expires: Expiration::Never {}
+            }]
+        );
+
+        // revoke the approval
+        let res = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::Revoke {
+                spender: ADDR2.to_string(),
+                token_id: "1".to_string(),
+            },
+        )
+        .unwrap();
+
+        // ensure response event emits the transferred token_id
+        assert!(res
+            .attributes
+            .iter()
+            .any(|attr| attr.key == "token_id" && attr.value == "1"));
+
+        // check approval was revoked
+        let token = tokens().load(&deps.storage, "xyz #1").unwrap();
+        assert_eq!(token.name, "xyz #1");
+        assert_eq!(token.approvals, vec![]);
+    }
+
+    #[test]
+    fn cw721_send_nft() {
+        let mut deps = mock_dependencies(&[]);
+        setup_storage(deps.as_mut());
+
+        let token_id = "1".to_string();
+        let target = "another_contract".to_string();
+        let msg = to_binary("my msg").unwrap();
+
+        // send a token to a contract
+        let res = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::SendNft {
+                contract: target.clone(),
+                token_id: token_id.clone(),
+                msg: msg.clone(),
+            },
+        )
+        .unwrap();
+
+        let payload = Cw721ReceiveMsg {
+            sender: ADDR1.to_string(),
+            token_id: token_id.clone(),
+            msg: msg.clone(),
+        };
+        let expected = payload.into_cosmos_msg(target.clone()).unwrap();
+        assert_eq!(
+            res,
+            Response::new()
+                .add_message(expected)
+                .add_attribute("action", "send_nft")
+                .add_attribute("sender", ADDR1)
+                .add_attribute("recipient", "another_contract")
+                .add_attribute("token_id", token_id.clone())
+        );
+    }
 }
