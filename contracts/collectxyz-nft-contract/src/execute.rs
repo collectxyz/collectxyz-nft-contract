@@ -296,7 +296,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
         let new_token_id = format!("#{}", token_num);
         let token = tokens().load(deps.storage, &token_id)?;
         let mut new_token = token.clone();
-        new_token.name = new_token_id.clone();
+        new_token.name = new_token_id.to_string();
         tokens().remove(deps.storage, &token_id)?;
         tokens().update(deps.storage, &new_token_id, |old| match old {
             Some(_) => Ok(new_token),
