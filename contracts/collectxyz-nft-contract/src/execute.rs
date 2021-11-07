@@ -407,7 +407,7 @@ mod test {
 
     fn setup_storage(deps: DepsMut) {
         for token in token_examples().iter() {
-            tokens().save(deps.storage, &token.name, &token).unwrap();
+            tokens().save(deps.storage, &token.name, token).unwrap();
         }
     }
 
@@ -524,9 +524,9 @@ mod test {
         let payload = Cw721ReceiveMsg {
             sender: ADDR1.to_string(),
             token_id: token_id.clone(),
-            msg: msg.clone(),
+            msg,
         };
-        let expected = payload.into_cosmos_msg(target.clone()).unwrap();
+        let expected = payload.into_cosmos_msg(target).unwrap();
         assert_eq!(
             res,
             Response::new()
@@ -534,7 +534,7 @@ mod test {
                 .add_attribute("action", "send_nft")
                 .add_attribute("sender", ADDR1)
                 .add_attribute("recipient", "another_contract")
-                .add_attribute("token_id", token_id.clone())
+                .add_attribute("token_id", token_id)
         );
     }
 }
