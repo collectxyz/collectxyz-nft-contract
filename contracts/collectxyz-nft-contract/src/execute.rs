@@ -1,10 +1,10 @@
-use base64;
 use rsa::{hash::Hash, padding::PaddingScheme, PublicKey};
 use serde_json;
 use sha2::{Digest, Sha256};
 
 use collectxyz::nft::{
-    Config, Coordinates, ExecuteMsg, InstantiateMsg, MigrateMsg, XyzExtension, XyzTokenInfo,
+    base64_token_image, Config, Coordinates, ExecuteMsg, InstantiateMsg, MigrateMsg, XyzExtension,
+    XyzTokenInfo,
 };
 use cosmwasm_std::{
     BankMsg, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError, StdResult, Storage,
@@ -175,15 +175,6 @@ fn check_coordinates(storage: &dyn Storage, coords: &Coordinates) -> Result<(), 
     }
 }
 
-fn base64_token_image(coords: &Coordinates) -> String {
-    let svg = format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 240 240"><g class="container"><rect style="width:240px;height:240px;fill:#000;"/><text x="120" y="120" dominant-baseline="middle" text-anchor="middle" style="fill:#fff;font-family:serif;font-size:16px;text-align:center;">[{}, {}, {}]</text></g></svg>"#,
-        coords.x, coords.y, coords.z
-    );
-    let base64_uri = format!("data:image/svg+xml;base64,{}", base64::encode(svg));
-    base64_uri
-}
-
 pub fn execute_move(
     deps: DepsMut,
     env: Env,
@@ -288,20 +279,6 @@ pub fn cw721_base_execute(
         .map_err(|err| err.into())
 }
 
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
-    let cw721_contract = Cw721Contract::<XyzExtension, Empty>::default();
-    let num_tokens = 1 + cw721_contract.token_count(deps.storage)?;
-    for token_num in 1..num_tokens {
-        let token_id = format!("xyz #{}", token_num);
-        tokens().update(deps.storage, &token_id, |old_token| match old_token {
-            Some(old_token) => {
-                let mut new_token = old_token.clone();
-                new_token.image = Some(base64_token_image(&old_token.extension.coordinates));
-                Ok(new_token)
-            }
-            None => Err(StdError::generic_err("migration")),
-        })?;
-    }
-
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     Ok(Response::default().add_attribute("action", "migrate"))
 }

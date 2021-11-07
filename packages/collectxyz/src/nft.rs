@@ -184,7 +184,7 @@ impl XyzTokenInfo {
             token_uri: None,
             extension: Cw721Metadata {
                 name: Some(self.name.clone()),
-                image: self.image.clone(),
+                image: Some(self.base64_token_image()),
                 description: Some(self.description.clone()),
                 attributes: Some(self.extension.as_traits()),
                 image_data: None,
@@ -195,6 +195,19 @@ impl XyzTokenInfo {
             },
         }
     }
+
+    pub fn base64_token_image(&self) -> String {
+        base64_token_image(&self.extension.coordinates)
+    }
+}
+
+pub fn base64_token_image(coords: &Coordinates) -> String {
+    let svg = format!(
+        r#"<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" viewBox="0 0 240 240"><g class="container"><rect style="width:240px;height:240px;fill:#000;"/><text x="120" y="120" dominant-baseline="middle" text-anchor="middle" style="fill:#fff;font-family:serif;font-size:16px;text-align:center;">[{}, {}, {}]</text></g></svg>"#,
+        coords.x, coords.y, coords.z
+    );
+    let base64_uri = format!("data:image/svg+xml;base64,{}", base64::encode(svg));
+    base64_uri
 }
 
 /// This overrides the ExecuteMsg enum defined in cw721-base
@@ -465,7 +478,7 @@ mod tests {
             name: "xyz #1".to_string(),
             owner: Addr::unchecked("test owner"),
             description: "test description".to_string(),
-            image: Some("test image".to_string()),
+            image: None,
             approvals: vec![],
             extension: XyzExtension {
                 coordinates: Coordinates { x: 1, y: 2, z: 3 },
@@ -481,7 +494,7 @@ mod tests {
                 extension: Cw721Metadata {
                     name: Some("xyz #1".to_string()),
                     description: Some("test description".to_string()),
-                    image: Some("test image".to_string()),
+                    image: Some("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaW5ZTWluIG1lZXQiIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48ZyBjbGFzcz0iY29udGFpbmVyIj48cmVjdCBzdHlsZT0id2lkdGg6MjQwcHg7aGVpZ2h0OjI0MHB4O2ZpbGw6IzAwMDsiLz48dGV4dCB4PSIxMjAiIHk9IjEyMCIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9ImZpbGw6I2ZmZjtmb250LWZhbWlseTpzZXJpZjtmb250LXNpemU6MTZweDt0ZXh0LWFsaWduOmNlbnRlcjsiPlsxLCAyLCAzXTwvdGV4dD48L2c+PC9zdmc+".to_string()),
                     attributes: Some(vec![
                         Cw721Trait {
                             display_type: None,
