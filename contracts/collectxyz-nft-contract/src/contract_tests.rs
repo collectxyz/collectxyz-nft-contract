@@ -248,7 +248,7 @@ fn minting() {
             deps.as_ref(),
             mock_env(),
             QueryMsg::OwnerOf {
-                token_id: String::from("xyz #1"),
+                token_id: "1".to_string(),
                 include_expired: None,
             },
         )
