@@ -271,7 +271,7 @@ fn minting() {
     );
     assert_eq!(
         tokens["tokens"],
-        serde_json::Value::Array(vec![serde_json::Value::String(String::from("xyz #1"))])
+        serde_json::Value::Array(vec![serde_json::Value::String(String::from("1"))])
     );
 }
 
