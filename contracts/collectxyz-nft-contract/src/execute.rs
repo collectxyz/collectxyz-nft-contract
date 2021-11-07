@@ -7,7 +7,8 @@ use collectxyz::nft::{
     InstantiateMsg, MigrateMsg, XyzExtension, XyzTokenInfo,
 };
 use cosmwasm_std::{
-    BankMsg, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError, StdResult, Storage,
+    Attribute, BankMsg, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
+    StdResult, Storage,
 };
 use cw721::ContractInfoResponse;
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
@@ -307,9 +308,23 @@ pub fn cw721_base_execute(
         _ => cw721_msg,
     };
 
-    cw721_contract
-        .execute(deps, env, info, cw721_msg_full_token_id)
-        .map_err(|err| err.into())
+    match cw721_contract.execute(deps, env, info, cw721_msg_full_token_id) {
+        Ok(mut response) => {
+            response.attributes = response
+                .attributes
+                .iter()
+                .map(|attr| {
+                    if attr.key == "token_id" {
+                        Attribute::new("token_id", numeric_token_id(attr.value.to_string()))
+                    } else {
+                        attr.clone()
+                    }
+                })
+                .collect();
+            Ok(response)
+        }
+        Err(err) => Err(err.into()),
+    }
 }
 
 pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
