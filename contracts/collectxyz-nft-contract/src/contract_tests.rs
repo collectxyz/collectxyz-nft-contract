@@ -152,7 +152,7 @@ fn minting() {
     assert!(res
         .attributes
         .iter()
-        .any(|attr| attr.key == "token_id" && attr.value == "xyz #1"));
+        .any(|attr| attr.key == "token_id" && attr.value == "1"));
 
     // random cannot mint a token with same coordinates twice
     let err = execute(
@@ -226,12 +226,12 @@ fn minting() {
             deps.as_ref(),
             mock_env(),
             QueryMsg::NftInfo {
-                token_id: String::from("xyz #1"),
+                token_id: String::from("1"),
             },
         )
         .unwrap(),
     );
-    assert_eq!(info["extension"]["name"], "xyz #1");
+    assert_eq!(info["extension"]["name"], "1");
     assert_eq!(
         info["extension"]["description"],
         "Explore the metaverse, starting with xyz."
@@ -248,7 +248,7 @@ fn minting() {
             deps.as_ref(),
             mock_env(),
             QueryMsg::OwnerOf {
-                token_id: String::from("xyz #1"),
+                token_id: String::from("1"),
                 include_expired: None,
             },
         )
@@ -271,7 +271,7 @@ fn minting() {
     );
     assert_eq!(
         tokens["tokens"],
-        serde_json::Value::Array(vec![serde_json::Value::String(String::from("xyz #1"))])
+        serde_json::Value::Array(vec![serde_json::Value::String(String::from("1"))])
     );
 }
 
@@ -642,9 +642,9 @@ fn move_token() {
     setup_contract(deps.as_mut(), None, None, None);
 
     // mint some tokens
-    let nonowner_xyz_id = "xyz #1";
+    let nonowner_xyz_id = "1";
     let nonowner_coords = Coordinates { x: 0, y: 0, z: 0 };
-    let owner_xyz_id = "xyz #2";
+    let owner_xyz_id = "2";
     let owner_coords = Coordinates { x: 1, y: 1, z: 1 };
     let _ = execute(
         deps.as_mut(),
@@ -778,7 +778,7 @@ fn move_token() {
     assert!(res
         .attributes
         .iter()
-        .any(|attr| attr.key == "token_id" && attr.value == "xyz #1"));
+        .any(|attr| attr.key == "token_id" && attr.value == "1"));
 
     // look up the updated token
     let res = QueryHandler::query_xyz_nft_info(deps.as_ref(), nonowner_xyz_id.to_string()).unwrap();
@@ -880,6 +880,6 @@ fn xyz_nft_info_by_coords() {
         )
         .unwrap(),
     );
-    assert_eq!(res["name"], "xyz #1");
+    assert_eq!(res["name"], "1");
     assert_eq!(res["owner"], NONOWNER);
 }

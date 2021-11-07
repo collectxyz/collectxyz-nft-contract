@@ -73,7 +73,7 @@ pub fn execute_mint(
 
     // create the token
     let num_tokens = 1 + num_tokens;
-    let token_id = format!("xyz #{}", &num_tokens);
+    let token_id = format!("{}", &num_tokens);
     let token = XyzTokenInfo {
         owner: info.sender.clone(),
         approvals: vec![],
