@@ -210,12 +210,21 @@ pub fn base64_token_image(coords: &Coordinates) -> String {
     base64_uri
 }
 
-pub fn full_token_id(numeric_token_id: String) -> String {
-    format!("xyz #{}", numeric_token_id)
+pub fn full_token_id(numeric_token_id: String) -> StdResult<String> {
+    // make sure the string is an integer
+    numeric_token_id
+        .parse::<u64>()
+        .map_err(|_| StdError::generic_err("expected numeric token identifier"))?;
+    Ok(format!("xyz #{}", numeric_token_id))
 }
 
-pub fn numeric_token_id(full_token_id: String) -> String {
-    full_token_id[5..].to_string()
+pub fn numeric_token_id(full_token_id: String) -> StdResult<String> {
+    if !full_token_id.starts_with("xyz #") {
+        return Err(StdError::generic_err(
+            "expected full token identifier, like 'xyz #123'",
+        ));
+    }
+    Ok(full_token_id.trim_start_matches("xyz #").to_string())
 }
 
 /// This overrides the ExecuteMsg enum defined in cw721-base

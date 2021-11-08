@@ -97,7 +97,7 @@ pub fn execute_mint(
     Ok(Response::new()
         .add_attribute("action", "mint")
         .add_attribute("minter", info.sender)
-        .add_attribute("token_id", numeric_token_id(token_id)))
+        .add_attribute("token_id", numeric_token_id(token_id)?))
 }
 
 fn check_sufficient_funds(funds: Vec<Coin>, required: Coin) -> Result<(), ContractError> {
@@ -218,7 +218,7 @@ pub fn execute_move(
     Ok(Response::default()
         .add_attribute("action", "move")
         .add_attribute("mover", info.sender)
-        .add_attribute("token_id", numeric_token_id(token_id)))
+        .add_attribute("token_id", numeric_token_id(token_id)?))
 }
 
 pub fn execute_update_config(
@@ -283,18 +283,18 @@ pub fn cw721_base_execute(
         } => Cw721ExecuteMsg::Approve {
             spender,
             expires,
-            token_id: full_token_id(token_id),
+            token_id: full_token_id(token_id)?,
         },
         Cw721ExecuteMsg::Revoke { spender, token_id } => Cw721ExecuteMsg::Revoke {
             spender,
-            token_id: full_token_id(token_id),
+            token_id: full_token_id(token_id)?,
         },
         Cw721ExecuteMsg::TransferNft {
             recipient,
             token_id,
         } => Cw721ExecuteMsg::TransferNft {
             recipient,
-            token_id: full_token_id(token_id),
+            token_id: full_token_id(token_id)?,
         },
         Cw721ExecuteMsg::SendNft {
             contract,
@@ -303,7 +303,7 @@ pub fn cw721_base_execute(
         } => Cw721ExecuteMsg::SendNft {
             contract,
             msg,
-            token_id: full_token_id(token_id),
+            token_id: full_token_id(token_id)?,
         },
         _ => cw721_msg,
     };
@@ -324,7 +324,10 @@ pub fn cw721_base_execute(
         .iter()
         .map(|attr| {
             if attr.key == "token_id" {
-                Attribute::new("token_id", numeric_token_id(attr.value.to_string()))
+                Attribute::new(
+                    "token_id",
+                    numeric_token_id(attr.value.to_string()).unwrap(),
+                )
             } else {
                 attr.clone()
             }
@@ -347,7 +350,7 @@ pub fn execute_send_nft(
 
     let send = Cw721ReceiveMsg {
         sender: info.sender.to_string(),
-        token_id: numeric_token_id(token_id.clone()),
+        token_id: numeric_token_id(token_id.clone())?,
         msg,
     };
 
@@ -411,10 +414,27 @@ mod test {
         }
     }
 
+    fn numeric_id_error() -> ContractError {
+        ContractError::Std(StdError::generic_err("expected numeric token identifier"))
+    }
+
     #[test]
     fn cw721_transfer() {
         let mut deps = mock_dependencies(&[]);
         setup_storage(deps.as_mut());
+
+        // blocks full token identifiers
+        let err = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::TransferNft {
+                recipient: ADDR2.to_string(),
+                token_id: "xyz #1".to_string(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, numeric_id_error());
 
         // transfer xyz #1
         let res = cw721_base_execute(
@@ -445,6 +465,20 @@ mod test {
         let mut deps = mock_dependencies(&[]);
         setup_storage(deps.as_mut());
 
+        // approve blocks full token identifiers
+        let err = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::Approve {
+                spender: ADDR2.to_string(),
+                token_id: "xyz #1".to_string(),
+                expires: None,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, numeric_id_error());
+
         // grant an approval
         let res = cw721_base_execute(
             deps.as_mut(),
@@ -474,6 +508,19 @@ mod test {
                 expires: Expiration::Never {}
             }]
         );
+
+        // revoke blocks full token identifiers
+        let err = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::Revoke {
+                spender: ADDR2.to_string(),
+                token_id: "xyz #1".to_string(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, numeric_id_error());
 
         // revoke the approval
         let res = cw721_base_execute(
@@ -507,6 +554,20 @@ mod test {
         let token_id = "1".to_string();
         let target = "another_contract".to_string();
         let msg = to_binary("my msg").unwrap();
+
+        // blocks full token identifiers
+        let err = cw721_base_execute(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(ADDR1, &[]),
+            ExecuteMsg::SendNft {
+                contract: target.clone(),
+                token_id: "xyz #1".to_string(),
+                msg: msg.clone(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, numeric_id_error());
 
         // send a token to a contract
         let res = cw721_base_execute(
