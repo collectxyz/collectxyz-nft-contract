@@ -119,7 +119,7 @@ pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary
     let cw721_msg: Cw721QueryMsg = msg.into();
     match cw721_msg {
         Cw721QueryMsg::NftInfo { token_id } => {
-            to_binary(&query_nft_info(deps, env, full_token_id(token_id))?)
+            to_binary(&query_nft_info(deps, env, full_token_id(token_id)?)?)
         }
         Cw721QueryMsg::AllNftInfo {
             token_id,
@@ -127,7 +127,7 @@ pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary
         } => to_binary(&query_all_nft_info(
             deps,
             env,
-            full_token_id(token_id),
+            full_token_id(token_id)?,
             include_expired.unwrap_or(false),
         )?),
         Cw721QueryMsg::Tokens {
@@ -144,7 +144,7 @@ pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary
         } => to_binary(&owner_of(
             deps,
             env,
-            full_token_id(token_id),
+            full_token_id(token_id)?,
             include_expired.unwrap_or(false),
         )?),
         _ => cw721_contract.query(deps, env, cw721_msg),
@@ -194,7 +194,7 @@ pub fn query_tokens(
     let tokens = res.map_err(StdError::invalid_utf8)?;
     let numeric_tokens: Vec<String> = tokens
         .iter()
-        .map(|s| numeric_token_id(s.to_string()))
+        .map(|s| numeric_token_id(s.to_string()).unwrap())
         .collect();
     Ok(TokensResponse {
         tokens: numeric_tokens,
@@ -217,7 +217,7 @@ pub fn query_all_tokens(
     let tokens = res.map_err(StdError::invalid_utf8)?;
     let numeric_tokens: Vec<String> = tokens
         .iter()
-        .map(|s| numeric_token_id(s.to_string()))
+        .map(|s| numeric_token_id(s.to_string()).unwrap())
         .collect();
     Ok(TokensResponse {
         tokens: numeric_tokens,
@@ -303,6 +303,10 @@ mod test {
         }
     }
 
+    fn numeric_id_error() -> StdError {
+        StdError::generic_err("expected numeric token identifier")
+    }
+
     #[test]
     fn nft_info() {
         let mut deps = mock_dependencies(&[]);
@@ -346,6 +350,18 @@ mod test {
             },
         };
 
+        // nft_info blocks full token identifiers
+        let err = cw721_base_query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::NftInfo {
+                token_id: "xyz #1".to_string(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, numeric_id_error());
+
+        // nft_info looks up token info for numeric id
         let info = from_binary::<Cw721NftInfoResponse>(
             &cw721_base_query(
                 deps.as_ref(),
@@ -359,6 +375,19 @@ mod test {
         .unwrap();
         assert_eq!(info, expected);
 
+        // all_nft_info blocks full token identifiers
+        let err = cw721_base_query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::AllNftInfo {
+                token_id: "xyz #1".to_string(),
+                include_expired: None,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, numeric_id_error());
+
+        // all_nft_info looks up token access and info for numeric id
         let all_info = from_binary::<Cw721AllNftInfoResponse>(
             &cw721_base_query(
                 deps.as_ref(),
@@ -425,6 +454,19 @@ mod test {
         let mut deps = mock_dependencies(&[]);
         setup_storage(deps.as_mut());
 
+        // owner_of blocks full token identifiers
+        let err = cw721_base_query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::OwnerOf {
+                token_id: "xyz #1".to_string(),
+                include_expired: None,
+            },
+        )
+        .unwrap_err();
+        assert_eq!(err, numeric_id_error());
+
+        // owner_of looks up token ownership for numeric id
         let res = from_binary::<OwnerOfResponse>(
             &cw721_base_query(
                 deps.as_ref(),
