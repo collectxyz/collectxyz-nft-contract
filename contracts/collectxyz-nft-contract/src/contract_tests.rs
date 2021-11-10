@@ -4,7 +4,7 @@ use std::str;
 use collectxyz::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, QueryMsg, XyzExtension};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{BankMsg, Binary, Coin, DepsMut, StdError, Uint128};
-use serde_json::{json};
+use serde_json::json;
 
 use crate::contract::{execute, instantiate, query};
 use crate::error::ContractError;
