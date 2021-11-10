@@ -23,6 +23,7 @@ rustup target add wasm32-unknown-unknown
 ```
 
 ## Linting
+
 The following commands should be run for linting/formatting (and are enforced by CI):
 ```
 cargo clippy --all --all-targets -- -D warnings

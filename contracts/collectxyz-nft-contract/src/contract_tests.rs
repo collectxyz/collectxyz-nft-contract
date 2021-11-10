@@ -890,7 +890,7 @@ fn all_xyz_tokens() {
     let mut deps = mock_dependencies(&[]);
     setup_contract(deps.as_mut(), None, None, None);
 
-    // throws error on coordinate with no nft
+    // check no tokens returned
     let res = as_json(
         &query(
             deps.as_ref(),
@@ -928,6 +928,7 @@ fn all_xyz_tokens() {
     )
     .unwrap();
 
+    // check both tokens returned
     let res = as_json(
         &query(
             deps.as_ref(),
@@ -942,6 +943,7 @@ fn all_xyz_tokens() {
     assert_eq!(res["tokens"][0]["name"], "xyz #1");
     assert_eq!(res["tokens"][1]["name"], "xyz #2");
 
+    // check only second token returned
     let res = as_json(
         &query(
             deps.as_ref(),
