@@ -22,6 +22,14 @@ rustup target list --installed
 rustup target add wasm32-unknown-unknown
 ```
 
+## Linting
+
+The following commands should be run for linting/formatting (and are enforced by CI):
+```
+cargo clippy --all --all-targets -- -D warnings
+cargo fmt -- --check
+```
+
 ## Compiling and running tests
 
 Now that you created your custom contract, make sure you can compile and run it before

@@ -6,7 +6,6 @@ use collectxyz::nft::{
     XyzTokensResponse,
 };
 use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
-use cw0::maybe_addr;
 use cw721::{NumTokensResponse, OwnerOfResponse, TokensResponse};
 use cw721_base::{msg::QueryMsg as Cw721QueryMsg, Cw721Contract};
 use cw_storage_plus::Bound;
@@ -73,8 +72,7 @@ pub fn query_all_xyz_tokens(
     limit: Option<u32>,
 ) -> StdResult<XyzTokensResponse> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
-    let start_addr = maybe_addr(deps.api, start_after)?;
-    let start = start_addr.map(|addr| Bound::exclusive(addr.as_ref()));
+    let start = start_after.map(Bound::exclusive);
 
     let tokens: StdResult<Vec<_>> = tokens()
         .range(deps.storage, start, None, Order::Ascending)

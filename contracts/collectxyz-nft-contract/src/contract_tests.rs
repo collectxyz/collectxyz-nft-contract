@@ -4,6 +4,7 @@ use std::str;
 use collectxyz::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, QueryMsg, XyzExtension};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{BankMsg, Binary, Coin, DepsMut, StdError, Uint128};
+use serde_json::json;
 
 use crate::contract::{execute, instantiate, query};
 use crate::error::ContractError;
@@ -882,4 +883,77 @@ fn xyz_nft_info_by_coords() {
     );
     assert_eq!(res["name"], "xyz #1");
     assert_eq!(res["owner"], NONOWNER);
+}
+
+#[test]
+fn all_xyz_tokens() {
+    let mut deps = mock_dependencies(&[]);
+    setup_contract(deps.as_mut(), None, None, None);
+
+    // check no tokens returned
+    let res = as_json(
+        &query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::AllXyzTokens {
+                limit: Some(1),
+                start_after: None,
+            },
+        )
+        .unwrap(),
+    );
+    assert_eq!(res, json!({ "tokens": [] }));
+
+    // mint the associated nft
+    let _ = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(NONOWNER, &[]),
+        ExecuteMsg::Mint {
+            captcha_signature: String::from(SIG_X0Y0Z0),
+            coordinates: Coordinates { x: 0, y: 0, z: 0 },
+        },
+    )
+    .unwrap();
+
+    // mint the associated nft
+    let _ = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(NONOWNER, &[]),
+        ExecuteMsg::Mint {
+            captcha_signature: String::from(SIG_X1Y1Z1),
+            coordinates: Coordinates { x: 1, y: 1, z: 1 },
+        },
+    )
+    .unwrap();
+
+    // check both tokens returned
+    let res = as_json(
+        &query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::AllXyzTokens {
+                limit: Some(2),
+                start_after: None,
+            },
+        )
+        .unwrap(),
+    );
+    assert_eq!(res["tokens"][0]["name"], "xyz #1");
+    assert_eq!(res["tokens"][1]["name"], "xyz #2");
+
+    // check only second token returned
+    let res = as_json(
+        &query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::AllXyzTokens {
+                limit: Some(2),
+                start_after: Some("xyz #1".to_string()),
+            },
+        )
+        .unwrap(),
+    );
+    assert_eq!(res["tokens"][0]["name"], "xyz #2");
 }
