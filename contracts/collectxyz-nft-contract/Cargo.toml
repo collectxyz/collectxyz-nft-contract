@@ -1,6 +1,6 @@
 [package]
 name = "collectxyz-nft-contract"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["0xja <0xja@protonmail.com>"]
 edition = "2018"
 description = "The NFT smart contract powering xyz on Terra"
